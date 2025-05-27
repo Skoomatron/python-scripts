@@ -7,7 +7,7 @@
 # ------------------------------------------------------------------
 
 # === Configuration ===
-ip="54.153.28.209"                 # IP address to search
+ip="50.210.21.0"                 # IP address to search
 log_group="VPCFlowLog"            # CloudWatch log group name
 profile="default"                 # AWS CLI profile name
 lookback_minutes=60               # Time window in minutes
