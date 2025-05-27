@@ -2,7 +2,7 @@
 
 # ------------------------------------------------------------------
 # Script: search-vpc-flow-ip-us.sh
-# Purpose: Search VPC Flow Logs in CloudWatch for a specific IP across 4 U.S. AWS regions
+# Purpose: Search VPC Flow Logs in CloudWatch for a specific IP across key U.S. AWS regions
 # Author: Trevor Edwards (GCK)
 # ------------------------------------------------------------------
 
@@ -31,6 +31,20 @@ for region in "${regions[@]}"; do
   echo "🌍 Region: $region"
   echo "---------------------------------------------------------------"
 
+  # Check if log group exists in this region
+  log_group_check=$(aws logs describe-log-groups \
+    --log-group-name-prefix "$log_group" \
+    --region "$region" \
+    --profile "$profile" \
+    --query "logGroups[?logGroupName=='$log_group']" \
+    --output text 2>/dev/null)
+
+  if [[ -z "$log_group_check" ]]; then
+    echo "⚠️  Log group '$log_group' not found in $region. Skipping."
+    continue
+  fi
+
+  # Run the search
   result=$(aws logs filter-log-events \
     --log-group-name "$log_group" \
     --start-time "$((start_time * 1000))" \
@@ -41,8 +55,15 @@ for region in "${regions[@]}"; do
     --max-items 100 \
     --output json 2>/dev/null)
 
-  if [[ $(echo "$result" | jq '.events | length') -gt 0 ]]; then
-    echo "✅ Matches found in $region:"
+  if [[ $? -ne 0 || -z "$result" ]]; then
+    echo "❌ Error while querying logs in $region. Skipping."
+    continue
+  fi
+
+  # Check result contents
+  match_count=$(echo "$result" | jq '.events | length')
+  if [[ "$match_count" -gt 0 ]]; then
+    echo "✅ $match_count matches found in $region:"
     echo "$result" | jq '.events[] | {timestamp, logStreamName, message}'
   else
     echo "❌ No matches found in $region."
@@ -50,4 +71,4 @@ for region in "${regions[@]}"; do
 done
 
 echo ""
-echo "✅ Done."
+echo "✅ Search complete."
