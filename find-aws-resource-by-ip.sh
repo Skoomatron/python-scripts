@@ -6,7 +6,7 @@
 # Author: Trevor Edwards (GCK)
 # ------------------------------------------------------------------
 
-ip="172.31.58.249"
+ip="13.57.184.129"
 regions=(us-west-1 us-west-2 us-east-1 us-east-2)
 
 for region in "${regions[@]}"; do
